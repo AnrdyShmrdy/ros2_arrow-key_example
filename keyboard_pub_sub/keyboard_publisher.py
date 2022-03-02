@@ -15,39 +15,73 @@
 import rclpy
 from pynput import keyboard
 from rclpy.node import Node
-
+from pynput.keyboard import Listener
 from std_msgs.msg import String
 
+# def on_press(key):
+#     if key == keyboard.Key.up:
+#         print('key {0} pressed'.format(key))
+
+#         #self.msg.data = 'Key.up pressed'
+#     if key == keyboard.Key.down:
+#         print('key {0} pressed'.format(key))
+#         #self.msg.data = 'Key.down pressed'
+#     if key == keyboard.Key.left:
+#         print('key {0} pressed'.format(key))
+#         #self.msg.data = 'Key.left pressed'
+#     if key == keyboard.Key.right:
+#         print('key {0} pressed'.format(key))
+#         #self.msg.data = 'Key.right pressed'
+#     else:
+#         print('No Key Pressed')
+#         #self.msg.data = 'No key pressed'
+
+# def on_release(key):
+#     if key == keyboard.Key.up:
+#         print('{0} released'.format(key))
+#         #self.msg.data = 'Key.up released'
+#     if key == keyboard.Key.down:
+#         print('{0} released'.format(key))
+#         #self.msg.data = 'Key.down released'
+#     if key == keyboard.Key.left:
+#         print('{0} released'.format(key))
+#         #self.msg.data = 'Key.left released'
+#     if key == keyboard.Key.right:
+#         print('{0} released'.format(key))
+#         #self.msg.data = 'Key.right released'
+#     if key == keyboard.Key.esc:
+#             # Stop listener
+#             return False
+#     else:
+#         print('No Key relesed')
+#         #self.msg.data = 'No key released'
+
+def run_publisher(node):
+    def onpress(key):
+        msg = String()
+        #msg.data = "key pressed"
+        #function responsible for publishing the pressed key
+        msg.data = "pressed key is {}".format(key)
+        node.publisher_.publish(msg)
+    def onrelease(key):
+        msg = String()
+        #msg.data = "key released"
+        #function responsible for publishing the released key
+        msg.data = "released key is {}".format(key)
+        node.publisher_.publish(msg)
+    #initialising Listener object   
+    with Listener(on_press = onpress, on_release = onrelease) as l:
+        l.join()
 class KeyboardPublisher(Node):
     def __init__(self):
         super().__init__('keyboard_publisher')
         self.publisher_ = self.create_publisher(String, 'topic', 10)
-        timer_period = 0.5  # seconds
-        self.msg = String()
-        self.timer = self.create_timer(timer_period, self.timer_callback)
-        self.i = 0
-
-    def timer_callback(self):
-        with keyboard.Events() as events:
-        # Block at most one second
-            event = events.get(0.5)
-            if event is None:
-                print('You did not press a key within a half second')
-                self.msg.data = 'No key pressed'
-            else:
-                print('Received event {}'.format(event))
-                self.msg.data = 'key pressed'
-        self.publisher_.publish(self.msg)
-        self.get_logger().info('Publishing: "%s"' % self.msg.data)
-        self.i += 1
-
 
 def main(args=None):
     rclpy.init(args=args)
 
     keyboard_publisher = KeyboardPublisher()
-
-    rclpy.spin(keyboard_publisher)
+    run_publisher(keyboard_publisher)
 
     # Destroy the node explicitly
     # (optional - otherwise it will be done automatically
